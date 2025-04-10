@@ -1,7 +1,6 @@
-import { useState } from 'react'
+import { useState } from 'react';
 
 function App() {
-
   const products = [
     { name: 'Mela', price: 0.5 },
     { name: 'Pane', price: 1.2 },
@@ -10,12 +9,32 @@ function App() {
   ];
 
   const [addedProducts, setAddedProducts] = useState([]);
-  const updateProductQuantity = (productName, newQuantity) => {
-    setAddedProducts(prevProducts =>
-      prevProducts.map(prevProduct => prevProduct.name === productName ? { ...prevProduct, quantity: newQuantity } : prevProduct)
-    );
 
-  }
+  const updateProductQuantity = (productName, newQuantity) => {
+    if (newQuantity === "" || isNaN(newQuantity)) {
+      setAddedProducts(prevProducts =>
+        prevProducts.map(prevProduct =>
+          prevProduct.name === productName
+            ? { ...prevProduct, quantity: "" }
+            : prevProduct
+        )
+      );
+      return;
+    }
+
+    if (newQuantity < 1) {
+      return;
+    }
+
+    setAddedProducts(prevProducts =>
+      prevProducts.map(prevProduct =>
+        prevProduct.name === productName
+          ? { ...prevProduct, quantity: newQuantity }
+          : prevProduct
+      )
+    );
+  };
+
   const addToCart = (product) => {
     const isProductInCart = addedProducts.find(item => item.name === product.name);
     if (isProductInCart) {
@@ -25,14 +44,16 @@ function App() {
     const productToAdd = {
       ...product,
       quantity: 1
-    }
+    };
     setAddedProducts(prevProducts => [...prevProducts, productToAdd]);
-  }
+  };
+
   const removeFromCart = (product) => {
     setAddedProducts(prevProducts => prevProducts.filter(item => item.name !== product.name));
-  }
+  };
+
   const totalPrice = addedProducts.reduce((acc, product) => {
-    return acc + (product.price * product.quantity);
+    return acc + (product.price * (parseInt(product.quantity) || 0));
   }, 0);
 
   return (
@@ -46,20 +67,30 @@ function App() {
           </li>
         ))}
       </ul>
-      {addedProducts.length > 0 && (<>
-        <h1>Carrello</h1>
-        <ul>
-          {addedProducts.map((product, index) => (
-            <li key={index}>
-              {product.name} - {product.price.toFixed(2)}€ x {product.quantity}
-              <button onClick={() => removeFromCart(product)}>Rimuovi dal carrello</button>
-            </li>
-          ))}
-        </ul>
-        <h2>Totale: {totalPrice.toFixed(2)}€</h2>
-      </>)}
+      {addedProducts.length > 0 && (
+        <>
+          <h1>Carrello</h1>
+          <ul>
+            {addedProducts.map((product, index) => (
+              <li key={index}>
+                <p>
+                  <input
+                    type="number"
+                    value={product.quantity === "" ? "" : product.quantity}
+                    onChange={(e) => updateProductQuantity(product.name, parseInt(e.target.value) || "")}
+                    min="1"
+                  />
+                  <span>x {product.name} ({product.price.toFixed(2)}€)</span>
+                </p>
+                <button onClick={() => removeFromCart(product)}>Rimuovi dal carrello</button>
+              </li>
+            ))}
+          </ul>
+          <h2>Totale: {totalPrice.toFixed(2)}€</h2>
+        </>
+      )}
     </>
-  )
+  );
 }
 
-export default App
+export default App;
