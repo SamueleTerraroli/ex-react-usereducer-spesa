@@ -10,11 +10,16 @@ function App() {
   ];
 
   const [addedProducts, setAddedProducts] = useState([]);
-  console.log(addedProducts);
+  const updateProductQuantity = (productName, newQuantity) => {
+    setAddedProducts(prevProducts =>
+      prevProducts.map(prevProduct => prevProduct.name === productName ? { ...prevProduct, quantity: newQuantity } : prevProduct)
+    );
 
+  }
   const addToCart = (product) => {
-    const isProductInCart = addedProducts.some(item => item.name === product.name);
+    const isProductInCart = addedProducts.find(item => item.name === product.name);
     if (isProductInCart) {
+      updateProductQuantity(isProductInCart.name, isProductInCart.quantity + 1);
       return;
     }
     const productToAdd = {
@@ -23,6 +28,12 @@ function App() {
     }
     setAddedProducts(prevProducts => [...prevProducts, productToAdd]);
   }
+  const removeFromCart = (product) => {
+    setAddedProducts(prevProducts => prevProducts.filter(item => item.name !== product.name));
+  }
+  const totalPrice = addedProducts.reduce((acc, product) => {
+    return acc + (product.price * product.quantity);
+  }, 0);
 
   return (
     <>
@@ -41,9 +52,11 @@ function App() {
           {addedProducts.map((product, index) => (
             <li key={index}>
               {product.name} - {product.price.toFixed(2)}€ x {product.quantity}
+              <button onClick={() => removeFromCart(product)}>Rimuovi dal carrello</button>
             </li>
           ))}
         </ul>
+        <h2>Totale: {totalPrice.toFixed(2)}€</h2>
       </>)}
     </>
   )
