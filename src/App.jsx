@@ -1,4 +1,30 @@
-import { useState } from 'react';
+import { useReducer } from 'react';
+
+function cartReducer(addedProducts, action) {
+  switch (action.type) {
+    case 'ADD_ITEM':
+      // Logica per aggiungere un prodotto
+      const isProductInCart = addedProducts.find(item => item.name === action.payload.name);
+      if (isProductInCart) {
+        action.payload.quantity = isProductInCart.quantity + 1;
+      } else {
+        return [...addedProducts, { ...action.payload, quantity: 1 }];
+      }
+    case 'UPDATE_QUANTITY':
+      // Logica per aggiornare la quantità
+      return addedProducts.map(product => {
+        if (product.name === action.payload.name) {
+          return { ...product, quantity: action.payload.quantity };
+        }
+        return product;
+      });
+    case 'REMOVE_ITEM':
+      // Logica per rimuovere un prodotto
+      return addedProducts.filter(product => product.name !== action.payload);
+    default:
+      return state;
+  }
+}
 
 function App() {
   const products = [
@@ -8,49 +34,8 @@ function App() {
     { name: 'Pasta', price: 0.7 },
   ];
 
-  const [addedProducts, setAddedProducts] = useState([]);
+  const [addedProducts, dispatchCart] = useReducer(cartReducer, []);
 
-  const updateProductQuantity = (productName, newQuantity) => {
-    if (newQuantity === "" || isNaN(newQuantity)) {
-      setAddedProducts(prevProducts =>
-        prevProducts.map(prevProduct =>
-          prevProduct.name === productName
-            ? { ...prevProduct, quantity: "" }
-            : prevProduct
-        )
-      );
-      return;
-    }
-
-    if (newQuantity < 1) {
-      return;
-    }
-
-    setAddedProducts(prevProducts =>
-      prevProducts.map(prevProduct =>
-        prevProduct.name === productName
-          ? { ...prevProduct, quantity: newQuantity }
-          : prevProduct
-      )
-    );
-  };
-
-  const addToCart = (product) => {
-    const isProductInCart = addedProducts.find(item => item.name === product.name);
-    if (isProductInCart) {
-      updateProductQuantity(isProductInCart.name, isProductInCart.quantity + 1);
-      return;
-    }
-    const productToAdd = {
-      ...product,
-      quantity: 1
-    };
-    setAddedProducts(prevProducts => [...prevProducts, productToAdd]);
-  };
-
-  const removeFromCart = (product) => {
-    setAddedProducts(prevProducts => prevProducts.filter(item => item.name !== product.name));
-  };
 
   const totalPrice = addedProducts.reduce((acc, product) => {
     return acc + (product.price * (parseInt(product.quantity) || 0));
@@ -63,7 +48,7 @@ function App() {
         {products.map((product, index) => (
           <li key={index}>
             {product.name} - {product.price.toFixed(2)}€
-            <button onClick={() => addToCart(product)}>Aggiungi al carrello</button>
+            <button onClick={() => dispatchCart({ type: 'ADD_ITEM', payload: product })}>Aggiungi al carrello</button>
           </li>
         ))}
       </ul>
@@ -77,12 +62,13 @@ function App() {
                   <input
                     type="number"
                     value={product.quantity === "" ? "" : product.quantity}
-                    onChange={(e) => updateProductQuantity(product.name, parseInt(e.target.value) || "")}
+                    onChange={(e) => dispatchCart({ type: 'UPDATE_QUANTITY', payload: { name: product.name, quantity: e.target.value } })
+                    }
                     min="1"
                   />
                   <span>x {product.name} ({product.price.toFixed(2)}€)</span>
                 </p>
-                <button onClick={() => removeFromCart(product)}>Rimuovi dal carrello</button>
+                <button onClick={() => dispatchCart({ type: 'REMOVE_ITEM', payload: product.name })}>Rimuovi dal carrello</button>
               </li>
             ))}
           </ul>
